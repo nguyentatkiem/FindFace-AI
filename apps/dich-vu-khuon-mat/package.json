@@ -1,0 +1,10 @@
+{
+  "name": "@anh/dich-vu-khuon-mat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dịch vụ Python: ảnh → vector khuôn mặt 512 chiều (InsightFace buffalo_l, ONNX CPU)",
+  "scripts": {
+    "dev": "./.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8100",
+    "cai-dat": "python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt"
+  }
+}

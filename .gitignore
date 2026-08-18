@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.local
+*.log
+.DS_Store
+*.tsbuildinfo
+.venv/
+__pycache__/
+# Kho ảnh + dữ liệu suy diễn (thumbnail, chuyển đổi…)
+du-lieu/

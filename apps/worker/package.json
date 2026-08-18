@@ -1,0 +1,24 @@
+{
+  "name": "@anh/worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts lich",
+    "chay": "tsx src/index.ts chay"
+  },
+  "dependencies": {
+    "@anh/core": "workspace:*",
+    "@anh/db": "workspace:*",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.16",
+    "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^6.4.17",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

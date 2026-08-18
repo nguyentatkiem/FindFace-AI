@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  kiem-thu:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    # Image pgvector/pgvector = Postgres chính chủ + extension vector (bảng KhuonMat)
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: maros
+          POSTGRES_PASSWORD: maros_ci
+          POSTGRES_DB: anh_khoa_hoc_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U maros"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://maros:maros_ci@localhost:5432/anh_khoa_hoc_test
+      TEST_DATABASE_URL: postgresql://maros:maros_ci@localhost:5432/anh_khoa_hoc_test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Cài dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Sinh Prisma client
+        run: pnpm --filter @anh/db generate
+      - name: Test logic core (không cần DB)
+        run: pnpm --filter @anh/core test
+      - name: Áp migration vào DB test
+        run: pnpm --filter @anh/db migrate:deploy
+      - name: Test tích hợp service layer (DB thật)
+        run: pnpm --filter @anh/db test
+      - name: Build web
+        run: pnpm build

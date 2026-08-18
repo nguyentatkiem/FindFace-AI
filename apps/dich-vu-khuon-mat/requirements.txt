@@ -1,0 +1,12 @@
+# Dịch vụ khuôn mặt — cài vào venv cục bộ: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+insightface>=1.0.1
+onnxruntime>=1.28
+fastapi
+uvicorn[standard]
+pillow
+numpy
+opencv-python-headless
+python-multipart
+pillow-heif
+# CLIP tìm theo mô tả (bật env CLIP=1) — nặng, cài khi cần:
+sentence-transformers

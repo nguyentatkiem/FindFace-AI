@@ -1,0 +1,182 @@
+// Ảnh khóa học — schema CSDL (tách từ dự án gốc 18/08/2026)
+// Quy ước: tên miền nghiệp vụ tiếng Việt không dấu; vector khuôn mặt = pgvector.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model GioiHanTanSuat {
+  khoa        String   @id
+  soLan       Int      @default(0)
+  batDauCuaSo DateTime @default(now())
+
+  @@index([batDauCuaSo]) // phục vụ dọn bản ghi cũ
+}
+
+model SuKienAnh {
+  id         Int       @id @default(autoincrement())
+  ma         String    @unique // mã ngắn trong link/QR, vd "khoa-mkt-25"
+  ten        String
+  ngay       DateTime  @db.Date // ngày sự kiện — mốc tính hạn xóa dữ liệu khuôn mặt
+  hanXoaNgay Int       @default(90) // sau sự kiện N ngày thì xóa vector mặt (dữ liệu sinh trắc — Nghị định 13/2023)
+  daXoaMat   Boolean   @default(false) // đã dọn vector mặt (ảnh gốc vẫn giữ)
+  trangThai       String   @default("hoat_dong") // hoat_dong | tam_khoa
+  choPhepXemTatCa Boolean  @default(true) // học viên được duyệt TOÀN BỘ thư viện (ngoài tìm bằng selfie)
+  watermark       Boolean  @default(false) // đóng mờ tên sự kiện lên ảnh phát ra (xem trước + tải)
+  taoLuc          DateTime @default(now())
+
+  anhs     AnhSuKien[]
+  thuMucs  ThuMucAnh[]
+  luotTims LuotTimAnh[]
+  albums   AlbumCaNhan[]
+  cums     CumKhuonMat[]
+  luotTais LuotTaiAnh[]
+}
+
+model AnhSuKien {
+  id        Int       @id @default(autoincrement())
+  suKienId  Int
+  suKien    SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  thuMucId  Int? // thư mục trong sự kiện (buổi sáng, lễ trao chứng chỉ…) — null = chưa phân
+  thuMuc    ThuMucAnh? @relation(fields: [thuMucId], references: [id], onDelete: SetNull)
+  tenTep    String
+  duongDan  String    @unique // đường dẫn tuyệt đối tới file gốc trên máy chủ
+  rongPx    Int?
+  caoPx     Int?
+  soMat     Int       @default(0)
+  doNet     Float? // phương sai Laplacian — thấp = ảnh mờ
+  doSang    Float? // độ sáng trung bình 0..255
+  canhBaoChatLuong Boolean @default(false) // mờ/tối/cháy — admin duyệt loại trước khi công bố
+  dHash     String? // perceptual hash 16 hex — gom ảnh chụp liên thanh gần trùng
+  clipEmb   Unsupported("vector(512)")? // CLIP ViT-B/32 — tìm theo mô tả (bật qua env CLIP=1)
+  trangThai String    @default("cho_chi_muc") // cho_chi_muc | dang_chi_muc | xong | loi
+  loi       String?
+  taoLuc    DateTime  @default(now())
+  chiMucLuc DateTime?
+
+  khuonMats KhuonMat[]
+  albums    AnhAlbum[]
+
+  @@index([suKienId, trangThai]) // worker nhặt ảnh chờ chỉ mục theo sự kiện
+  @@index([suKienId, thuMucId]) // thư viện lọc theo thư mục
+}
+
+model ThuMucAnh {
+  id       Int       @id @default(autoincrement())
+  suKienId Int
+  suKien   SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  ten      String
+  thuTu    Int       @default(0) // thứ tự hiển thị chip thư mục
+  taoLuc   DateTime  @default(now())
+
+  anhs AnhSuKien[]
+
+  @@unique([suKienId, ten]) // trong một sự kiện tên thư mục không trùng — đồng bộ lại không nhân đôi
+  @@index([suKienId])
+}
+
+model KhuonMat {
+  id           Int                          @id @default(autoincrement())
+  anhId        Int
+  anh          AnhSuKien                    @relation(fields: [anhId], references: [id], onDelete: Cascade)
+  suKienId     Int // lặp từ AnhSuKien — lọc theo sự kiện ngay trong câu tìm vector, khỏi JOIN
+  bbox         Json // [x1, y1, x2, y2] pixel trên ảnh gốc (đã xoay EXIF)
+  diemPhatHien Float
+  embedding    Unsupported("vector(512)")? // ArcFace 512 chiều chuẩn hóa L2 — ghi/đọc qua $queryRaw
+  cumId        Int? // cụm "một người" do job gom-cum gán
+  cum          CumKhuonMat? @relation(fields: [cumId], references: [id], onDelete: SetNull)
+
+  @@index([suKienId])
+  @@index([anhId]) // FK không tự có index
+  @@index([cumId])
+}
+
+model AlbumCaNhan {
+  id         Int       @id @default(autoincrement())
+  token      String    @unique
+  suKienId   Int
+  suKien     SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  emb        Unsupported("vector(512)")?
+  lienHe     String? // email nhận báo "có ảnh mới"
+  soAnh      Int       @default(0)
+  taoLuc     DateTime  @default(now())
+  capNhatLuc DateTime  @default(now())
+
+  anhs AnhAlbum[]
+
+  @@index([suKienId])
+}
+
+model AnhAlbum {
+  albumId Int
+  album   AlbumCaNhan @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  anhId   Int
+  anh     AnhSuKien   @relation(fields: [anhId], references: [id], onDelete: Cascade)
+  diem    Float
+  daBao   Boolean     @default(false) // đã nằm trong email "ảnh mới" chưa
+  taoLuc  DateTime    @default(now())
+
+  @@id([albumId, anhId])
+  @@index([anhId])
+}
+
+model CumKhuonMat {
+  id           Int       @id @default(autoincrement())
+  suKienId     Int
+  suKien       SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  soMat        Int       @default(0)
+  soAnh        Int       @default(0)
+  matDaiDienId Int? // KhuonMat hiển thị đại diện (crop mặt)
+
+  khuonMats KhuonMat[]
+
+  @@index([suKienId])
+}
+
+model TaiKhoanQuanTri {
+  id      Int      @id @default(autoincrement())
+  email   String   @unique
+  hoTen   String
+  matKhau String // scrypt "salt:hash" hex
+  vaiTro  String   @default("phu") // chu | phu — chu mới được quản tài khoản
+  taoLuc  DateTime @default(now())
+}
+
+model NhatKyQuanTri {
+  id       BigInt   @id @default(autoincrement())
+  email    String // ai làm (email tài khoản, hoặc "mat-khau-chung")
+  hanhDong String // tao_su_kien | xoa_su_kien | xoa_anh | xoa_vector | ...
+  chiTiet  Json?
+  luc      DateTime @default(now())
+
+  @@index([luc])
+}
+
+model LuotTaiAnh {
+  id       BigInt    @id @default(autoincrement())
+  suKienId Int
+  suKien   SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  anhId    Int? // null với gói zip
+  loai     String // goc | zip
+  soAnh    Int       @default(1)
+  luc      DateTime  @default(now())
+
+  @@index([suKienId, luc])
+  @@index([suKienId, anhId]) // top ảnh tải nhiều
+}
+
+model LuotTimAnh {
+  id          Int       @id @default(autoincrement())
+  suKienId    Int
+  suKien      SuKienAnh @relation(fields: [suKienId], references: [id], onDelete: Cascade)
+  soMatSelfie Int // số selfie gửi lên trong lượt tìm
+  soAnhTra    Int // số ảnh trả về
+  taoLuc      DateTime  @default(now())
+
+  @@index([suKienId])
+}

@@ -1,0 +1,18 @@
+{
+  "name": "anh-khoa-hoc",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ảnh khóa học — học viên chụp selfie tìm ảnh của mình trong kho ảnh sự kiện (InsightFace + pgvector)",
+  "scripts": {
+    "dev": "pnpm --filter @anh/tim-anh dev",
+    "dev:khuon-mat": "pnpm --filter @anh/dich-vu-khuon-mat dev",
+    "dev:worker": "pnpm --filter @anh/worker dev",
+    "build": "pnpm --filter @anh/tim-anh build",
+    "test": "pnpm --filter @anh/core test",
+    "test:db": "pnpm --filter @anh/db test",
+    "test:all": "pnpm --filter @anh/core test && pnpm --filter @anh/db test",
+    "db:migrate": "pnpm --filter @anh/db migrate:deploy"
+  },
+  "engines": { "node": ">=22" },
+  "packageManager": "pnpm@9.15.9"
+}
