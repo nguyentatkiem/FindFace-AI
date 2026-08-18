@@ -1,5 +1,5 @@
 {
-  "name": "anh-khoa-hoc",
+  "name": "findface-ai",
   "private": true,
   "version": "1.0.0",
   "description": "Ảnh khóa học — học viên chụp selfie tìm ảnh của mình trong kho ảnh sự kiện (InsightFace + pgvector)",
@@ -13,6 +13,8 @@
     "test:all": "pnpm --filter @anh/core test && pnpm --filter @anh/db test",
     "db:migrate": "pnpm --filter @anh/db migrate:deploy"
   },
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "packageManager": "pnpm@9.15.9"
 }

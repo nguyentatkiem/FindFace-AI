@@ -1,4 +1,6 @@
-# 📸 Ảnh khóa học
+# 📸 FindFace AI
+
+*Tên sản phẩm: FindFace AI · tên giao diện tiếng Việt: "Ảnh khóa học"*
 
 Học viên **quét QR → chụp một tấm selfie → nhận toàn bộ ảnh có mặt mình** trong kho ảnh
 sự kiện (hàng vạn tấm, tìm trong ~2 giây) — cùng dòng công nghệ Kwikpic/Fotoowl:
