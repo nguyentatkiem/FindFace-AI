@@ -54,7 +54,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   // Sự kiện bật watermark → đóng mờ bản xem lớn (lưới 520 giữ sạch cho nhẹ)
   if (coLon) {
     const suKien = await laySuKienTheoMa(prisma, ma);
-    if (suKien?.watermark) buf = await apWatermark(buf, suKien.ten);
+    if (suKien?.watermark) buf = await apWatermark(buf, `TAKI GROUP · ${suKien.ten}`);
   }
 
   return new NextResponse(new Uint8Array(buf), {

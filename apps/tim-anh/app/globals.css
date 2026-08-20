@@ -334,3 +334,10 @@ hr.vach { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
 @keyframes chop-tat { from { opacity: 0.9; } to { opacity: 0; } }
 .nut-tim-lon { width: 100%; padding: 14px 22px; font-size: 16.5px; }
 @media (prefers-reduced-motion: reduce) { .chop-flash { animation: none; opacity: 0; } }
+
+/* Chân trang thương hiệu */
+.chan-trang {
+  text-align: center; color: var(--mut); font-size: 12.5px;
+  padding: 18px 16px 26px; border-top: 1px solid var(--line); margin-top: 8px;
+}
+.chan-trang strong { color: var(--deep); letter-spacing: 0.04em; }

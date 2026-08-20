@@ -43,7 +43,8 @@ export default async function TrangInQr({ params }: { params: Promise<{ id: stri
         <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: "0.12em", color: "var(--green)", textTransform: "uppercase" }}>
           Nhận ảnh của bạn
         </div>
-        <h1 style={{ fontSize: 34, margin: 0, letterSpacing: "-0.02em" }}>{suKien.ten}</h1>
+        <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: "0.18em", color: "var(--green)" }}>TAKI GROUP</div>
+      <h1 style={{ fontSize: 34, margin: 0, letterSpacing: "-0.02em" }}>{suKien.ten}</h1>
         <div className="qr-lon" dangerouslySetInnerHTML={{ __html: qr }} />
         <div style={{ fontSize: 15, color: "var(--mut)", wordBreak: "break-all" }}>{link}</div>
         <div className="buoc-in">
