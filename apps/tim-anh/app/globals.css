@@ -201,6 +201,9 @@ select.o-nhap { width: auto; }
 .khung-camera {
   position: relative; width: 100%; aspect-ratio: 3 / 4; background: #0b1512;
   border-radius: var(--r-the); overflow: hidden;
+  /* Máy đời cũ không hỗ trợ aspect-ratio → hộp sập về 0px, nút chụp mất chỗ đứng.
+     min-height giữ khung luôn đủ cao để thấy hình + bấm được nút tròn. */
+  min-height: min(70vh, 480px);
 }
 .khung-camera video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 .khung-ngam {

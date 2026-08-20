@@ -31,6 +31,7 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const tepRef = useRef<HTMLInputElement>(null);
+  const chupMayRef = useRef<HTMLInputElement>(null); // capture="user" → app CHỤP ẢNH của máy (máy cũ)
   const [coCamera, setCoCamera] = useState(false);
   const [chopFlash, setChopFlash] = useState(false);
   const [trongApp, setTrongApp] = useState<string | null>(null); // đang mở trong webview app nào
@@ -69,10 +70,11 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
     // thì nói thẳng thay vì để học viên nhìn màn đen
     const canh = setTimeout(() => {
       if (video.videoWidth === 0) {
+        tatCamera(); // nhả camera + lộ hàng nút dự phòng (chụp bằng app máy / chọn ảnh)
         setLoi(
           trongApp
             ? `Camera không lên hình trong ${trongApp}. Bấm ⋯ chọn "Mở bằng trình duyệt", hoặc dùng nút Chọn ảnh có sẵn.`
-            : "Camera không lên hình — thử bấm Mở camera lại, đổi trình duyệt (Chrome/Safari), hoặc dùng nút Chọn ảnh có sẵn."
+            : "Camera không lên hình — bấm \"📸 Chụp bằng máy ảnh của máy\" bên dưới (máy đời cũ nên dùng cách này), hoặc Chọn ảnh có sẵn."
         );
       }
     }, 4000);
@@ -147,6 +149,30 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
     if (buoc === "dong_y") setBuoc("camera");
   }
 
+  /** canvas → Blob JPEG, kèm dự phòng toDataURL cho trình duyệt cũ (toBlob null/ném lỗi). */
+  function canvasRaBlob(canvas: HTMLCanvasElement, chatLuong: number): Promise<Blob | null> {
+    return new Promise((xong) => {
+      const duPhong = () => {
+        try {
+          const chuoi = canvas.toDataURL("image/jpeg", chatLuong);
+          const [dau, than] = chuoi.split(",");
+          if (!than || !dau?.includes("image/")) return xong(null);
+          const nhi = atob(than);
+          const mang = new Uint8Array(nhi.length);
+          for (let i = 0; i < nhi.length; i++) mang[i] = nhi.charCodeAt(i);
+          xong(new Blob([mang], { type: "image/jpeg" }));
+        } catch {
+          xong(null);
+        }
+      };
+      try {
+        canvas.toBlob((b) => (b ? xong(b) : duPhong()), "image/jpeg", chatLuong);
+      } catch {
+        duPhong();
+      }
+    });
+  }
+
   function chupMotTam() {
     const video = videoRef.current;
     if (!video || video.videoWidth === 0) {
@@ -167,15 +193,14 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
     canvas.width = Math.round(video.videoWidth * tiLe);
     canvas.height = Math.round(video.videoHeight * tiLe);
     canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        setSelfies((cu) => [...cu, blob].slice(0, 3));
-        setXemTruoc((cu) => [...cu, URL.createObjectURL(blob)].slice(0, 3));
-      },
-      "image/jpeg",
-      0.9
-    );
+    void canvasRaBlob(canvas, 0.9).then((blob) => {
+      if (!blob) {
+        setLoi("Máy không tạo được ảnh từ camera trong trang — bấm \"📸 Chụp bằng máy ảnh của máy\" bên dưới nhé.");
+        return;
+      }
+      setSelfies((cu) => [...cu, blob].slice(0, 3));
+      setXemTruoc((cu) => [...cu, URL.createObjectURL(blob)].slice(0, 3));
+    });
   }
 
   function boSelfie(i: number) {
@@ -373,6 +398,12 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
             {!coCamera && (
               <button className="nut nut-phu nut-nho" onClick={moCamera} disabled={dangTim}>📷 Mở camera</button>
             )}
+            {!coCamera && (
+              <button className="nut nut-phu nut-nho" onClick={() => chupMayRef.current?.click()}
+                disabled={dangTim || selfies.length >= 3}>
+                📸 Chụp bằng máy ảnh của máy
+              </button>
+            )}
             <button className="nut nut-trang nut-nho" onClick={() => tepRef.current?.click()}
               disabled={dangTim || selfies.length >= 3}>
               🖼 Chọn ảnh có sẵn từ máy
@@ -380,6 +411,8 @@ export function ChupSelfie({ ma, hanXoaNgay, batLiveness = false }: { ma: string
           </div>
         </div>
         <input ref={tepRef} type="file" accept="image/*" multiple hidden
+          onChange={(e) => { chonTep(e.target.files); e.target.value = ""; }} />
+        <input ref={chupMayRef} type="file" accept="image/*" capture="user" hidden
           onChange={(e) => { chonTep(e.target.files); e.target.value = ""; }} />
       </div>
     );
